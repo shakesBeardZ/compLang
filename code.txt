@@ -1,0 +1,38 @@
+MAIN
+{
+$A : FLOAT ;
+c[100] : STRING ;
+b : STRING ;
+q : FLOAT ;
+h[4] : STRING ;
+}
+CODE
+{
+$sgf&""""a"hgvjhkv564636
+a = a + 9.5 + c * l ;
+VERIF ( a > 5 )
+{
+    VERIF ( a > 5 )
+    {
+    a='fxgsd&éng4354"';
+    a = 5 + 6.5  ;
+    }
+    AUTRE
+    {
+    a = 5 ;
+    }
+}
+AUTRE
+{
+    a = 5 ;
+}
+TANTQUE (i = 0 , ( i < 5 ) , i = i + 1)
+{
+TANTQUE (i = 0 , ( i < 5 ) , i = i + 1)
+{
+a = 5 + 6.5 ;
+}
+a = 5 + 6.5 ;
+}
+chaine = 'hahah';
+}
