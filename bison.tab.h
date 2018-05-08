@@ -84,7 +84,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 147 "bison.y"
+#line 146 "bison.y"
 
 char *chaine;
 int entier;

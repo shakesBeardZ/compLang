@@ -1,0 +1,6 @@
+MAIN{
+  log : NATURAL;
+}
+CODE{
+  log =  ((( ( compteur <= nbrrev ) | ( exist == 0 )) &  ( ( compteur <= nbrrev ) | ( exist == 0 ) ))) ;
+}

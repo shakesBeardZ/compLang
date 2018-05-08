@@ -1,3 +1,7 @@
-*.c
-
+// all c files and headers
+*.c 
+*.h
+// all the binaries
 *.exe
+// the bin folder
+/bin

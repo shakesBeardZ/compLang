@@ -3,7 +3,6 @@
 * Authors : MohDasilva & ShakesBeardz
 * Compilers Project
 * Compil Lang 
-*
 */
 %{ 
     #include<stdio.h> 
@@ -26,7 +25,7 @@ FILE* fichierTableSymboles = NULL;
 
 /****************************************** Initialiser la table de symboles *****************************************************/
 void initialise(){
-	fichierTableSymboles = fopen("tableSymboles.txt","w");
+	fichierTableSymboles = fopen("./../code/tableSymboles.txt","w");
 	fputs(" ------------------------------------------------------------------------------- \n", fichierTableSymboles);
 	fputs("| variable	| 	nature		| 	type		| 	taille	|\n", fichierTableSymboles);
 	fputs(" ------------------------------------------------------------------------------- \n", fichierTableSymboles);
@@ -168,13 +167,14 @@ float reel;
 
 %start PROGRAMME
 %%
-PROGRAMME: MAIN accoladeOuvrante DECLARATION accoladeFermante { printf("declaration correcte \n");} 
-		CODE accoladeOuvrante INSTRUCTIONS accoladeFermante {
+PROGRAMME:  MAIN accoladeOuvrante DECLARATION accoladeFermante { printf("declaration correcte \n");} 
+	        CODE accoladeOuvrante INSTRUCTIONS accoladeFermante {
 						printf("instruction correcte \n");
-						printf("programme correcte \n");
-};
+						printf("programme correcte \n"); return; 
+			};
 
 /******************************************************* partie declarations ************************************************************/
+
 DECLARATION: 	idf deuxPoints TYPE pointVirgule DECLARATION {
 					if(rechercher($1)){
 						printf("double declaration \n");
@@ -186,7 +186,11 @@ DECLARATION: 	idf deuxPoints TYPE pointVirgule DECLARATION {
 						printf("double declaration \n");
 						return 0;
 					}else inserer($1,1,$6,atoi($3));
-				}|;
+				}
+				| 
+				;
+
+
 TYPE: NATURAL {$$=0;}| FLOAT {$$=1;}| STRING {$$=2;};
 
 /******************************************************* partie instrcution ************************************************************/
@@ -216,18 +220,23 @@ AFFECTATIONTQ: idf affectation EXPRESSION_ARTH;
 EXPRESSION_ARTH: EXPRESSION_ARTH1 addition EXPRESSION_ARTH
 				|EXPRESSION_ARTH1 soustraction EXPRESSION_ARTH
 				|EXPRESSION_ARTH1;
+
 EXPRESSION_ARTH1:TERM multiplication EXPRESSION_ARTH1
 		|TERM division EXPRESSION_ARTH1
 		|TERM;
+
+
 TERM: idf | idf crochetOuvrant  idf crochetFermant | idf crochetOuvrant  entier crochetFermant |VALEURS ;
 
 /** expression comparaison **/
 
-EXPRESSION_LOGQ: COMPARAISON OPLOG COMPARAISON
-			   | COMPARAISON OPLOG EXPRESSION_LOGQ
-			   | parentheseOuvrante EXPRESSION_LOGQ parentheseFermante
-			   | COMPARAISON	
-			   ;
+EXPRESSION_LOGQ:  COMPARAISON OPLOG COMPARAISON
+				| COMPARAISON OPLOG EXPRESSION_LOGQ
+				| parentheseOuvrante EXPRESSION_LOGQ parentheseFermante
+				| parentheseOuvrante EXPRESSION_LOGQ parentheseFermante OPLOG parentheseOuvrante EXPRESSION_LOGQ parentheseFermante
+				| COMPARAISON  
+				;
+
 
 COMPARAISON : TERM OPCOMP TERM
         	| parentheseOuvrante COMPARAISON parentheseFermante
@@ -254,13 +263,23 @@ int yyerror(char *msg){
 	printf(" syntaxic error %d", yylineno);
 }
 
-int main() { 	
-	initialise();
-	yyin = fopen("tet.txt","r");
-	if(yyin == NULL) printf("erreur d'ouverture");
-	else {
+int main(int argc, char **argv) {
+	if( argc > 1){
+		++argv, --argc; /* skip over program name */
+		yyin = fopen( argv[0], "r" ); 
+		initialise();
+		if(yyin == NULL) {
+			printf(" \t Error While Opening the file");
+			return 0;
+		}
+		yyparse();
+	    afficher();
+		return 0;
+	} else {
+		printf("\t Write Your Proram directly to the console (: \n ");
+		yyin = stdin;
 		yyparse();
 		afficher();
+		return 0;
 	}
-	return 0; 
 }
