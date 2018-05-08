@@ -1,27 +1,6 @@
 MAIN{
-nbrrev:NATURAL;
-exist:NATURAL;
-evmoy [30]:FLOAT;
-compteur:NATURAL;
-somme:FLOAT;
-nbadmis:NATURAL;
-secivmoy:FLOAT;
+  log : NATURAL;
 }
 CODE{
-nbrrev=25;
-exit=0; 
-TANTQUE ( compteur = 0 ,  ( compteur <= nbrrev ) & ( exist == 0 ) , compteur = compteur + 1)
-{
-  VERIF ( evmoy [ compteur ] < 0 )
-  {
-    exist = 1 ; 
-  }
-  AUTRE 
-  {
-    somme = somme + evmoy [ compteur ] ; 
-  }
-}
-  nbadmis = compteur; 
-  secivmoy = somme/compteur; 
- 
+  log = ( compteur <= nbrrev );
 }

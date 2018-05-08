@@ -193,7 +193,9 @@ TYPE: NATURAL {$$=0;}| FLOAT {$$=1;}| STRING {$$=2;};
 INSTRUCTIONS :INSTRUCTION INSTRUCTIONS | ;
 INSTRUCTION: AFFECTATION | BOUCLEIF | BOUCLETQ;
 
-AFFECTATION: idf affectation EXPRESSION_ARTH pointVirgule;
+AFFECTATION:  idf affectation EXPRESSION_ARTH pointVirgule
+			| idf affectation EXPRESSION_LOGQ pointVirgule
+			;
 
 /** AIDE BOUCLE **/
 ACCOLADEOUVRANTE :parentheseFermante  accoladeOuvrante;
@@ -202,12 +204,12 @@ ACCOLADEOUVRANTE: accoladeOuvrante ;
 
 
 /** BOUCLE VERIF **/
-BOUCLEIF:   VERIF parentheseOuvrante EXPRESSION_COMP parentheseFermante ACCOLADEOUVRANTE INSTRUCTIONS  ACCOLADEFERMANTE BOUCLEELSE
+BOUCLEIF:   VERIF parentheseOuvrante EXPRESSION_LOGQ parentheseFermante ACCOLADEOUVRANTE INSTRUCTIONS  ACCOLADEFERMANTE BOUCLEELSE
 		;
 BOUCLEELSE: AUTRE ACCOLADEOUVRANTE INSTRUCTIONS ACCOLADEFERMANTE | ;
 
 /** BOUCLE TANTQUE **/
-BOUCLETQ: TANTQUE parentheseOuvrante  AFFECTATIONTQ virgule EXPRESSION_COMP virgule AFFECTATIONTQ parentheseFermante ACCOLADEOUVRANTE  INSTRUCTIONS ACCOLADEFERMANTE;
+BOUCLETQ: TANTQUE parentheseOuvrante  AFFECTATIONTQ virgule EXPRESSION_LOGQ virgule AFFECTATIONTQ parentheseFermante ACCOLADEOUVRANTE  INSTRUCTIONS ACCOLADEFERMANTE;
 AFFECTATIONTQ: idf affectation EXPRESSION_ARTH;
 
 /** expression arithmetique **/
@@ -220,31 +222,31 @@ EXPRESSION_ARTH1:TERM multiplication EXPRESSION_ARTH1
 TERM: idf | idf crochetOuvrant  idf crochetFermant | idf crochetOuvrant  entier crochetFermant |VALEURS ;
 
 /** expression comparaison **/
-EXPRESSION_COMP:   parentheseOuvrante EXPRESSION_COMP1 parentheseFermante OU parentheseOuvrante EXPRESSION_COMP parentheseFermante 
-		     	 | EXPRESSION_COMP1;
-EXPRESSION_COMP1: parentheseOuvrante EXPRESSION_COMP2 ET EXPRESSION_COMP1 parentheseFermante 
-				 | EXPRESSION_COMP2;
-EXPRESSION_COMP2:negation parentheseOuvrante COMP parentheseFermante
-		|	COMP
-		|	parentheseOuvrante COMP parentheseFermante;
- 
-COMP: 	 TERM superieur TERM
-		|TERM inferieur TERM
-		|TERM egale TERM
-		|TERM different TERM
-		|TERM superieurEg TERM
-		|TERM inferieurEg TERM;
+
+EXPRESSION_LOGQ: COMPARAISON OPLOG COMPARAISON
+			   | COMPARAISON OPLOG EXPRESSION_LOGQ
+			   | parentheseOuvrante EXPRESSION_LOGQ parentheseFermante
+			   | COMPARAISON	
+			   ;
+
+COMPARAISON : TERM OPCOMP TERM
+        	| parentheseOuvrante COMPARAISON parentheseFermante
+      ;
+OPLOG :   OU 
+		| ET
+		; 
+
+OPCOMP:   superieur 
+		| inferieur 
+		| egale 
+		| different 
+		| superieurEg 
+		| inferieurEg ;
 
 VALEURS: entier | reel | chaine ;
 
 /** expression logique **/
 
-/*EXPRESSION_LOGQ: EXPRESSION_LOGQ1 OU EXPRESSION_LOGQ
-		|EXPRESSION_LOGQ1;
-EXPRESSION_LOGQ1: EXPRESSION_LOGQ2 ET EXPRESSION_LOGQ1
-		| EXPRESSION_LOGQ2;
-EXPRESSION_LOGQ2: negation EXPRESSION_LOGQ2
-			| TERM;*/
 
 %%
 
