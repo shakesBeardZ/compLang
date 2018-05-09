@@ -1,11 +1,12 @@
-%option yylineno
 %{ 
     #include<stdio.h> 
 	#include<string.h> 
 	#include "bison.tab.h"
 	extern YYSTYPE yylval;
-	extern int l=1,c=1;
+	extern int l , c ;
 %} 
+
+%option yylineno
 
 chiffre [0-9] 
 lettre [a-z]
@@ -22,7 +23,7 @@ commentaire ^$(.)*\n
 		return MAIN;
 }
 "CODE" {	c+=4; 
-		yylval = (YYSTYPE)strdup(yytext); 
+		    yylval = (YYSTYPE)strdup(yytext); 
 		return CODE;
 }  
 "VERIF" {	c+=5; 
@@ -118,7 +119,7 @@ commentaire ^$(.)*\n
 	return egale;
 } 
 "!=" { 	c+=2;
-	yylval = (YYSTYPE)strdup(yytext);  
+	yylval = (YYSTYPE)strdup(yytext);  	
 	return different;
 } 
 ">=" { 	c+=2;
@@ -151,8 +152,11 @@ commentaire ^$(.)*\n
 		printf("%s %d %d", yytext, l, c);
 		exit(0);
 	}else{
-		c += strlen(yytext); 
-		yylval = (YYSTYPE)strdup(yytext); 
+		if (!rechercher((YYSTYPE)strdup(yytext))){
+			inserer((YYSTYPE)strdup(yytext), 0 , -1 , 1, NULL);
+		}
+		yylval = (YYSTYPE)strdup(yytext);
+		c += strlen(yytext);  
 		return idf;	
 	}
 }

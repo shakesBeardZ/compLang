@@ -1,6 +1,7 @@
 MAIN{
-  log : NATURAL;
+     log, ss[5] , ww[5] ,ss[5] :STRING;
+     b , w[5] , log: FLOAT;
 }
 CODE{
-  log =  ((( ( compteur <= nbrrev ) | ( exist == 0 )) &  ( ( compteur <= nbrrev ) | ( exist == 0 ) ))) ;
+  log = 5;
 }

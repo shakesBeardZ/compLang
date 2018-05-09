@@ -11,6 +11,7 @@
 	extern FILE * yyin;
 	extern int yylineno;
 	extern char *yytext;
+ 	int l = 1, c =1;
 
 typedef struct TSelement { 
 		char nom[8] ; 
@@ -20,12 +21,14 @@ typedef struct TSelement {
 		struct TSelement *suivant;
 }TSelement; 
 
-TSelement *TS[1000];
+TSelement *TS[10000];
 FILE* fichierTableSymboles = NULL;
+
+int  indiceIDFS = 0;
 
 /****************************************** Initialiser la table de symboles *****************************************************/
 void initialise(){
-	fichierTableSymboles = fopen("./../code/tableSymboles.txt","w");
+	fichierTableSymboles = fopen("./tableSymboles.txt","w");
 	fputs(" ------------------------------------------------------------------------------- \n", fichierTableSymboles);
 	fputs("| variable	| 	nature		| 	type		| 	taille	|\n", fichierTableSymboles);
 	fputs(" ------------------------------------------------------------------------------- \n", fichierTableSymboles);
@@ -36,7 +39,25 @@ void initialise(){
 /********************************************************************************************************************************/
 
 /************************* rechercher un element dans la table de symboles *****************************************************/
-int rechercher(char *e){ 
+TSelement* rechercher(char *e){ 
+	TSelement* C;
+	int hach=hachage(e);
+
+	if (TS[hach]->nom == NULL) return NULL; 
+	else if (! strcmp( TS[hach]->nom , e ) ) {
+		return (TSelement*)TS[hach];  
+	}
+	else 
+	{
+	    C=TS[hach]->suivant;
+	    while (C!=NULL)
+		{
+		    if (!strcmp(C->nom, e)) return C; 
+		    else C=C->suivant;
+		}
+	    return NULL;
+	}
+/* 
 	int i;
 	TSelement *parcour;
 	for(i = 0; i<1000; i++){
@@ -48,9 +69,24 @@ int rechercher(char *e){
 			}
 		}
 	}
-	return 0;
+	return 0; */
 }
 /********************************************************************************************************************************/
+
+void ERREUR(char*probleme, int ligne,int colonne,int num)
+{
+	int taille=strlen(probleme);colonne=colonne-taille;
+	switch(num)
+    {
+     case 1: printf("\nErreur semantique => double decalration de l'identificateur %s  => ligne: %d colonne: %d\n",probleme,ligne,colonne);
+                break;
+     case 2: printf("\nErreur semantique => %s Identificateur non Declare  => ligne: %d colonne: %d\n",probleme,ligne,colonne);
+                break;
+     case 3: printf("\nErreur semantique => %s : Incompatibilte des Types => ligne: %d colonne: %d\n",probleme,ligne,colonne);
+                break;
+    }
+}
+
 
 
 /*********************** Ecrire dans le fichier apres chaque insertion **********************************************************/
@@ -77,6 +113,7 @@ void ecrireDansLeFichier(char* nom, int nature, int type, int taille){
 void inserer(char nom[8], int nature, int type, int taille){ 
 	int indice = hachage(nom);
 	if(!existeElement(indice)){
+		// existe 
 		TSelement *parcour, *newElement = malloc(sizeof(TSelement));
 		strcpy(newElement->nom,nom); 
 		newElement->nature=nature;
@@ -88,6 +125,7 @@ void inserer(char nom[8], int nature, int type, int taille){
 		while(parcour->suivant != NULL) parcour = parcour->suivant;
 		parcour->suivant = newElement;
 	}else{
+		// n'existe pas 
 		TS[indice] = malloc(sizeof(TSelement));
 		strcpy(TS[indice]->nom,nom); 
 		TS[indice]->nature=nature;
@@ -105,10 +143,9 @@ void afficher() {
 	printf("\n--------------------\n table des symboles \n--------------------\n");
     printf("\n|NOM    |NATURE    |TYPE    |TAILLE    |\t");
     printf("\n|--------------------------------------| \t");
-
 	int i;
 	TSelement *parcour;
-	for(i = 0; i<1000; i++){
+	for(i = 0; i<10000; i++){
 		if(TS[i] != NULL) {
 			parcour=TS[i];
 			while(parcour!= NULL){				
@@ -122,12 +159,16 @@ void afficher() {
 
 /************************************ Une simple fonction de hachage (ASCII) ******************************************************/
 
-int hachage(char *idf){
-	int i, somme = 0;
-	for( i=0; idf[i] != '\0'; i++)
-		somme += idf[i];
-	somme %= 1000;
-	return somme;
+int hachage(char *elt){
+	int code = 0;
+    int len = strlen (elt);
+    int i;
+ 
+    for (i = 0; i < len; i++)
+    {
+   	  	code = ((int)elt[i]) + 31 * code;
+    }
+    return code % 10000;
 }
 
 /********************************************************************************************************************************/
@@ -140,6 +181,48 @@ int existeElement(int indice){
 }
 
 /********************************************************************************************************************************/
+
+ void sauv_type(int typevar,char* elt)
+{
+	TSelement* C;
+	char * res = strtok(elt, ",");
+	int i;
+	while (res != NULL)
+	{
+		C = rechercher(res);
+		printf(" \n %s ", C->nom );
+		if(C->type == -1 ){
+			C->type=typevar;
+			res = strtok (NULL, ",");
+		}else {
+			ERREUR( C->nom , l , c, 1);
+			return;
+		}
+    }
+}
+
+
+ void sauv_taille_nature(int taille,char* elt)
+{
+	TSelement* C;
+	C = rechercher(elt);
+	if(C != NULL){
+		C->taille =taille;
+		C->nature =1;
+		return ;
+	}
+}
+
+
+
+/*********** | Routine de déclaration type simple | ***********/
+
+int Routine_Dec(char* elt)
+{
+	TSelement* C = rechercher(elt);
+	if ( C->type !=-1 ) return 0; 
+	else return -1;
+}
 
 %} 
 
@@ -161,6 +244,7 @@ float reel;
 %token <chaine> reel
 
 %type <entier> TYPE
+%type <chaine> IDFS
 
 %left '+' '-'
 %left '*' '/'
@@ -175,20 +259,30 @@ PROGRAMME:  MAIN accoladeOuvrante DECLARATION accoladeFermante { printf("declara
 
 /******************************************************* partie declarations ************************************************************/
 
-DECLARATION: 	idf deuxPoints TYPE pointVirgule DECLARATION {
-					if(rechercher($1)){
-						printf("double declaration \n");
-						return 0;
-					}else inserer($1,0,$3,1);
-				}
-				| idf crochetOuvrant  entier crochetFermant deuxPoints TYPE pointVirgule DECLARATION  {
-					if(rechercher($1)){
-						printf("double declaration \n");
-						return 0;
-					}else inserer($1,1,$6,atoi($3));
-				}
-				| 
-				;
+DECLARATION:     IDFS deuxPoints TYPE { 
+            	sauv_type($3,$1); 
+			}  pointVirgule DECLARATION 
+            |  
+            ;
+ 
+IDFS :  idf virgule IDFS  {
+	    $1 = strcat($1, ",");
+		$$ = strcat($1 , $3);
+		}
+    | idf {
+		 	
+	  }
+    | idf crochetOuvrant  entier crochetFermant virgule IDFS {
+    		sauv_taille_nature(atoi($3) , $1 );
+			$1 = strcat($1, ",");
+			$$ = strcat($1, $6);
+		}
+    | idf crochetOuvrant  entier crochetFermant {
+				sauv_taille_nature(atoi($3) ,$1);
+	     }
+    ;
+
+
 
 
 TYPE: NATURAL {$$=0;}| FLOAT {$$=1;}| STRING {$$=2;};
@@ -217,16 +311,19 @@ BOUCLETQ: TANTQUE parentheseOuvrante  AFFECTATIONTQ virgule EXPRESSION_LOGQ virg
 AFFECTATIONTQ: idf affectation EXPRESSION_ARTH;
 
 /** expression arithmetique **/
-EXPRESSION_ARTH: EXPRESSION_ARTH1 addition EXPRESSION_ARTH
-				|EXPRESSION_ARTH1 soustraction EXPRESSION_ARTH
-				|EXPRESSION_ARTH1;
+	EXPRESSION_ARTH:  EXPRESSION_ARTH1 addition EXPRESSION_ARTH
+					| EXPRESSION_ARTH1 soustraction EXPRESSION_ARTH
+					| EXPRESSION_ARTH1;
 
-EXPRESSION_ARTH1:TERM multiplication EXPRESSION_ARTH1
+EXPRESSION_ARTH1: TERM multiplication EXPRESSION_ARTH1
 		|TERM division EXPRESSION_ARTH1
 		|TERM;
 
 
-TERM: idf | idf crochetOuvrant  idf crochetFermant | idf crochetOuvrant  entier crochetFermant |VALEURS ;
+TERM:     idf { check_declare($1);  }
+		| idf crochetOuvrant  idf crochetFermant { check_declare($1);  }
+		| idf crochetOuvrant  entier crochetFermant { check_declare($1);  }
+		| VALEURS ;
 
 /** expression comparaison **/
 
@@ -259,9 +356,12 @@ VALEURS: entier | reel | chaine ;
 
 %%
 
-int yyerror(char *msg){
-	printf(" syntaxic error %d", yylineno);
+int yyerror (char* msg) 
+{
+	printf("Erreur syntaxique à la ligne %d colonne %d : %s\n",yylineno, c , msg);
+	return 1;
 }
+
 
 int main(int argc, char **argv) {
 	if( argc > 1){
