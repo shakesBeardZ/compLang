@@ -1,7 +1,6 @@
 MAIN{
-     log, ss[5] , ww[5] ,ss[5] :STRING;
-     b , w[5] , log: FLOAT;
+     log, ss[5] , ww[5] :STRING;
 }
 CODE{
-  log = 5;
+  l = 5 + 6*4 + 5-5.5 / 9;
 }

@@ -224,6 +224,16 @@ int Routine_Dec(char* elt)
 	else return -1;
 }
 
+void check_declare(char* elt){
+	TSelement* C = rechercher(elt);
+
+	if ( C->type == -1 ) {
+		ERREUR( C->nom , l , c, 2);
+		return ;
+	}
+	else return ;
+}
+
 %} 
 
 %union {
@@ -245,6 +255,10 @@ float reel;
 
 %type <entier> TYPE
 %type <chaine> IDFS
+%type <entier> TERM
+%type <entier> VALEUR
+%type <entier> EXPRESSION_ARTH1
+%type <entier> EXPRESSION_ARTH
 
 %left '+' '-'
 %left '*' '/'
@@ -291,8 +305,8 @@ TYPE: NATURAL {$$=0;}| FLOAT {$$=1;}| STRING {$$=2;};
 INSTRUCTIONS :INSTRUCTION INSTRUCTIONS | ;
 INSTRUCTION: AFFECTATION | BOUCLEIF | BOUCLETQ;
 
-AFFECTATION:  idf affectation EXPRESSION_ARTH pointVirgule
-			| idf affectation EXPRESSION_LOGQ pointVirgule
+AFFECTATION:  idf { check_declare($1); } affectation EXPRESSION_ARTH pointVirgule
+			| idf { check_declare($1); } affectation EXPRESSION_LOGQ pointVirgule
 			;
 
 /** AIDE BOUCLE **/
@@ -311,19 +325,37 @@ BOUCLETQ: TANTQUE parentheseOuvrante  AFFECTATIONTQ virgule EXPRESSION_LOGQ virg
 AFFECTATIONTQ: idf affectation EXPRESSION_ARTH;
 
 /** expression arithmetique **/
-	EXPRESSION_ARTH:  EXPRESSION_ARTH1 addition EXPRESSION_ARTH
-					| EXPRESSION_ARTH1 soustraction EXPRESSION_ARTH
-					| EXPRESSION_ARTH1;
 
-EXPRESSION_ARTH1: TERM multiplication EXPRESSION_ARTH1
-		|TERM division EXPRESSION_ARTH1
-		|TERM;
+EXPRESSION_ARTH:     EXPRESSION_ARTH1 OPERATION EXPRESSION_ARTH 
+ 					{ 
+						if( $1 == $3 && $$ != -1 ){
+							printf(" \n compatibilte de type checked ");	
+						} else {
+							ERREUR( "" ,l,c,3);	
+						}
+					}
+					| EXPRESSION_ARTH1 
+						{ if( $1 == -1){
+							ERREUR( "" ,l,c,3);	
+							$$ = -1; 
+						}else {
+							$$ = $1; 
+						}
+						}
+					;
+					
 
 
-TERM:     idf { check_declare($1);  }
+EXPRESSION_ARTH1:  TERM OPERATION EXPRESSION_ARTH1 { if( $1 != $3) $$ = -1; else $$ = $1;  }
+				 | TERM { $$ = $1; };
+
+OPERATION : addition|soustraction|multiplication|division;
+
+
+TERM:     idf { $$ =rechercher($1)->type; check_declare($1);   }
 		| idf crochetOuvrant  idf crochetFermant { check_declare($1);  }
 		| idf crochetOuvrant  entier crochetFermant { check_declare($1);  }
-		| VALEURS ;
+		| VALEUR { $$ = $1;  printf(" \n real  -----------> %d ", $1 );  };
 
 /** expression comparaison **/
 
@@ -349,7 +381,7 @@ OPCOMP:   superieur
 		| superieurEg 
 		| inferieurEg ;
 
-VALEURS: entier | reel | chaine ;
+VALEUR:  entier {$$=0;} | reel  {$$=1;} | chaine  {$$=2; } ;
 
 /** expression logique **/
 
